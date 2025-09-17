@@ -40,7 +40,7 @@ if ($_POST) {
                         // Send notification to user
                         sendNotification(
                             $transaction['user_id'],
-                            'Withdrawal Approved! 🎉',
+                            'Withdrawal Approved! ðŸŽ‰',
                             "Your withdrawal of " . formatMoney($transaction['amount']) . " has been approved and will be processed within 24 hours.",
                             'success'
                         );
@@ -130,7 +130,7 @@ if ($_POST) {
                         // Send notification
                         sendNotification(
                             $transaction['user_id'],
-                            'Deposit Confirmed! 🎉',
+                            'Deposit Confirmed! ðŸŽ‰',
                             "Your deposit of " . formatMoney($transaction['amount']) . " has been confirmed and credited to your wallet.",
                             'success'
                         );
@@ -632,105 +632,86 @@ $stats = $stmt->fetch();
         <input type="hidden" name="transaction_id" id="approveDepositId">
     </form>
 
-    <script>
-        function approveWithdrawal(transactionId) {
-            if (confirm('Are you sure you want to approve this withdrawal? This action cannot be undone.')) {
-                document.getElementById('approveWithdrawalId').value = transactionId;
-                document.getElementById('approveWithdrawalForm').submit();
-            }
+    
+<script>
+    function approveWithdrawal(transactionId) {
+        if (confirm('Are you sure you want to approve this withdrawal? This action cannot be undone.')) {
+            document.getElementById('approveWithdrawalId').value = transactionId;
+            document.getElementById('approveWithdrawalForm').submit();
         }
+    }
 
-        function rejectWithdrawal(transactionId) {
-            document.getElementById('rejectTransactionId').value = transactionId;
-            document.getElementById('rejectionModal').classList.add('show');
+    function rejectWithdrawal(transactionId) {
+        document.getElementById('rejectTransactionId').value = transactionId;
+        document.getElementById('rejectionModal').classList.add('show');
+        // Prevent body scroll when modal is open
+        document.body.style.overflow = 'hidden';
+    }
+
+    function approveDeposit(transactionId) {
+        if (confirm('Are you sure you want to manually approve this deposit?')) {
+            document.getElementById('approveDepositId').value = transactionId;
+            document.getElementById('approveDepositForm').submit();
         }
+    }
 
-        function approveDeposit(transactionId) {
-            if (confirm('Are you sure you want to manually approve this deposit?')) {
-                document.getElementById('approveDepositId').value = transactionId;
-                document.getElementById('approveDepositForm').submit();
-            }
+    function closeRejectionModal() {
+        document.getElementById('rejectionModal').classList.remove('show');
+        // Restore body scroll
+        document.body.style.overflow = 'auto';
+        // Clear form
+        document.querySelector('#rejectionForm textarea').value = '';
+    }
+
+    // Close modal when clicking outside
+    document.getElementById('rejectionModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeRejectionModal();
         }
+    });
 
-        function closeRejectionModal() {
-            document.getElementById('rejectionModal').classList.remove('show');
+    // Close modal with Escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeRejectionModal();
         }
+    });
 
-        // Close modal when clicking outside
-        document.getElementById('rejectionModal').addEventListener('click', function(e) {
-            if (e.target === this) {
-                closeRejectionModal();
-            }
-        });
+    // Auto-refresh every 30 seconds for pending transactions
+    <?php if ($stats['pending_transactions'] > 0): ?>
+    setInterval(function() {
+        location.reload();
+    }, 30000);
+    <?php endif; ?>
 
-        // Auto-refresh every 30 seconds for pending transactions
-        <?php if ($stats['pending_transactions'] > 0): ?>
-        setInterval(function() {
+    // Form validation
+    document.getElementById('rejectionForm').addEventListener('submit', function(e) {
+        const reason = this.querySelector('textarea[name="rejection_reason"]').value.trim();
+        if (reason.length < 10) {
+            e.preventDefault();
+            alert('Please provide a detailed rejection reason (at least 10 characters).');
+            return false;
+        }
+        
+        const submitBtn = this.querySelector('button[type="submit"]');
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Processing...';
+        submitBtn.disabled = true;
+    });
+
+    // Export functionality
+    function exportTransactions() {
+        const currentUrl = new URL(window.location.href);
+        currentUrl.searchParams.set('export', 'csv');
+        window.location.href = currentUrl.toString();
+    }
+
+    // Keyboard shortcuts
+    document.addEventListener('keydown', function(e) {
+        if (e.ctrlKey && e.key === 'r') {
+            e.preventDefault();
             location.reload();
-        }, 30000);
-        <?php endif; ?>
-
-        // Export functionality
-        function exportTransactions() {
-            const currentUrl = new URL(window.location.href);
-            currentUrl.searchParams.set('export', 'csv');
-            window.location.href = currentUrl.toString();
         }
-
-        // Bulk actions (for future implementation)
-        function bulkApproveWithdrawals() {
-            if (confirm('Are you sure you want to approve all selected withdrawals?')) {
-                // Implementation for bulk approval
-            }
-        }
-
-        // Real-time updates using WebSocket (optional enhancement)
-        function initializeRealTimeUpdates() {
-            // WebSocket connection for real-time transaction updates
-            // This can be implemented for live updates without page refresh
-        }
-
-        // Keyboard shortcuts
-        document.addEventListener('keydown', function(e) {
-            if (e.ctrlKey && e.key === 'r') {
-                e.preventDefault();
-                location.reload();
-            }
-        });
-
-        // Enhanced search with auto-complete
-        const searchInput = document.querySelector('input[name="search"]');
-        if (searchInput) {
-            let searchTimeout;
-            searchInput.addEventListener('input', function() {
-                clearTimeout(searchTimeout);
-                searchTimeout = setTimeout(() => {
-                    // Auto-submit search after 1 second of no typing
-                    if (this.value.length >= 3 || this.value.length === 0) {
-                        this.form.submit();
-                    }
-                }, 1000);
-            });
-        }
-
-        // Transaction status color coding
-        function updateTransactionStatusColors() {
-            document.querySelectorAll('.transaction-row').forEach(row => {
-                const status = row.querySelector('.status-badge')?.textContent?.toLowerCase();
-                if (status === 'pending') {
-                    row.style.borderLeft = '4px solid #f59e0b';
-                } else if (status === 'completed') {
-                    row.style.borderLeft = '4px solid #10b981';
-                } else if (status === 'failed') {
-                    row.style.borderLeft = '4px solid #ef4444';
-                }
-            });
-        }
-
-        // Initialize page
-        document.addEventListener('DOMContentLoaded', function() {
-            updateTransactionStatusColors();
-        });
-    </script>
+    });
+</script>
 </body>
 </html>
