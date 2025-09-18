@@ -242,13 +242,13 @@ $stats = $stmt->fetch();
         }
         
         .modal {
-            display: none;
-            backdrop-filter: blur(10px);
-        }
-        
-        .modal.show {
-            display: flex;
-        }
+    display: none;
+    backdrop-filter: blur(10px);
+}
+
+.modal.show {
+    display: flex;
+}
         
         .transaction-row:hover {
             background: rgba(255, 255, 255, 0.05);
@@ -715,3 +715,4 @@ $stats = $stmt->fetch();
 </script>
 </body>
 </html>
+
